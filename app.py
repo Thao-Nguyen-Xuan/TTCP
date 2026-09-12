@@ -56,28 +56,46 @@ if uploaded_file is not None:
 
     st.divider()
 
-    if st.button("🚀 Tạo Bảng Kê Excel & Giấy Đề Nghị Word", type="primary"):
-        with st.spinner("Đang tạo file..."):
-            excel_path, docx_path = generate_outputs(data)
-            
-        st.success("✅ Đã tạo file thành công!")
+# Khởi tạo biến trong session_state nếu chưa có
+if "excel_path" not in st.session_state:
+    st.session_state.excel_path = None
+if "docx_path" not in st.session_state:
+    st.session_state.docx_path = None
+
+# Nút tạo file chính
+if st.button("🚀 Tạo Bảng Kê Excel & Giấy Đề Nghị Word", type="primary"):
+    with st.spinner("Đang tạo file..."):
+        # Gọi hàm tạo và lưu đường dẫn vào session_state để lưu giữ trạng thái
+        st.session_state.excel_path, st.session_state.docx_path = generate_outputs(data)
+    st.success("✅ Đã tạo file thành công!")
+
+# Kiểm tra nếu đã có đường dẫn file trong session_state thì hiển thị 2 nút tải vĩnh viễn (không bị mất khi bấm tải)
+if st.session_state.excel_path and st.session_state.docx_path:
+    if os.path.exists(st.session_state.excel_path) and os.path.exists(st.session_state.docx_path):
         
-        # Lấy tên file động từ đường dẫn
-        excel_filename = os.path.basename(excel_path)
-        docx_filename = os.path.basename(docx_path)
+        excel_filename = os.path.basename(st.session_state.excel_path)
+        docx_filename = os.path.basename(st.session_state.docx_path)
         
         col_dl1, col_dl2 = st.columns(2)
         
         with col_dl1:
-            if os.path.exists(excel_path):
-                with open(excel_path, "rb") as f:
-                    excel_bytes = f.read()
+            with open(st.session_state.excel_path, "rb") as f:
                 st.download_button(
                     label="📥 Tải xuống Bảng Kê (Excel)",
-                    data=excel_bytes,
+                    data=f.read(),
                     file_name=excel_filename,
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="download_excel_btn"
+                    key="btn_dl_excel"
+                )
+                    
+        with col_dl2:
+            with open(st.session_state.docx_path, "rb") as f:
+                st.download_button(
+                    label="📥 Tải xuống Giấy Đề Nghị (Word)",
+                    data=f.read(),
+                    file_name=docx_filename,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="btn_dl_docx"
                 )
                     
         with col_dl2:
