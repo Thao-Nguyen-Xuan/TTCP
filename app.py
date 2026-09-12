@@ -2,12 +2,13 @@ import streamlit as st
 import os
 from invoice_parser import parse_invoice_pdf
 from document_generator import generate_outputs
+from invoice_parser import parse_invoice_pdf
 
 st.set_page_config(page_title="Xử lý hóa đơn MobiFone", layout="wide")
 
 st.title("📄 Phần Mềm Xử Lý Hóa Đơn & Bảng Kê MobiFone")
 
-uploaded_file = st.file_uploader("Tải lên file PDF hóa đơn MobiFone", type=["pdf"])
+uploaded_file = st.file_uploader("Tải lên file PDF hóa đơn MobiFone", type=["pdf"], key="pdf_uploader")
 
 if uploaded_file is not None:
     temp_pdf_path = "temp_invoice.pdf"
@@ -56,20 +57,27 @@ if uploaded_file is not None:
 
     st.divider()
 
-# Khởi tạo biến trong session_state nếu chưa có
+# Khởi tạo biến trong session_state
 if "excel_path" not in st.session_state:
     st.session_state.excel_path = None
 if "docx_path" not in st.session_state:
     st.session_state.docx_path = None
 
-# Nút tạo file chính
-if st.button("🚀 Tạo Bảng Kê Excel & Giấy Đề Nghị Word", type="primary"):
-    with st.spinner("Đang tạo file..."):
-        # Gọi hàm tạo và lưu đường dẫn vào session_state để lưu giữ trạng thái
-        st.session_state.excel_path, st.session_state.docx_path = generate_outputs(data)
-    st.success("✅ Đã tạo file thành công!")
+# Đặt widget file_uploader và lấy biến kết quả (ví dụ: uploaded_file)
+# uploaded_file = st.file_uploader("Tải lên file PDF hóa đơn MobiFone", type=["pdf"], key="pdf_uploader")
 
-# Kiểm tra nếu đã có đường dẫn file trong session_state thì hiển thị 2 nút tải vĩnh viễn (không bị mất khi bấm tải)
+# ⚠️ CHỈ HIỂN THỊ NÚT TẠO KHI ĐÃ CÓ FILE ĐƯỢC TẢI LÊN
+if uploaded_file is not None:
+    
+    # Xử lý đọc dữ liệu từ file PDF ở đây...
+    data = parse_invoice_pdf(uploaded_file) 
+
+    if st.button("🚀 Tạo Bảng Kê Excel & Giấy Đề Nghị Word", type="primary"):
+        with st.spinner("Đang tạo file..."):
+            st.session_state.excel_path, st.session_state.docx_path = generate_outputs(data)
+        st.success("✅ Đã tạo file thành công!")
+
+# Hiển thị nút tải xuống nếu đã có đường dẫn file
 if st.session_state.excel_path and st.session_state.docx_path:
     if os.path.exists(st.session_state.excel_path) and os.path.exists(st.session_state.docx_path):
         
@@ -96,16 +104,4 @@ if st.session_state.excel_path and st.session_state.docx_path:
                     file_name=docx_filename,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     key="btn_dl_docx"
-                )
-                    
-        with col_dl2:
-            if os.path.exists(docx_path):
-                with open(docx_path, "rb") as f:
-                    docx_bytes = f.read()
-                st.download_button(
-                    label="📥 Tải xuống Giấy Đề Nghị (Word)",
-                    data=docx_bytes,
-                    file_name=docx_filename,
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    key="download_docx_btn"
                 )
