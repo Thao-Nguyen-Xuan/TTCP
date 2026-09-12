@@ -62,23 +62,32 @@ if uploaded_file is not None:
             
         st.success("✅ Đã tạo file thành công!")
         
+        # Lấy tên file động từ đường dẫn
+        excel_filename = os.path.basename(excel_path)
+        docx_filename = os.path.basename(docx_path)
+        
         col_dl1, col_dl2 = st.columns(2)
+        
         with col_dl1:
             if os.path.exists(excel_path):
                 with open(excel_path, "rb") as f:
-                    st.download_button(
-                        label="📥 Tải xuống Bảng Kê (Excel)",
-                        data=f,
-                        file_name="BangKe_Cuoc.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
+                    excel_bytes = f.read()
+                st.download_button(
+                    label="📥 Tải xuống Bảng Kê (Excel)",
+                    data=excel_bytes,
+                    file_name=excel_filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="download_excel_btn"
+                )
                     
         with col_dl2:
             if os.path.exists(docx_path):
                 with open(docx_path, "rb") as f:
-                    st.download_button(
-                        label="📥 Tải xuống Giấy Đề Nghị (Word)",
-                        data=f,
-                        file_name="GiayDeNghi_ThanhToan.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    )
+                    docx_bytes = f.read()
+                st.download_button(
+                    label="📥 Tải xuống Giấy Đề Nghị (Word)",
+                    data=docx_bytes,
+                    file_name=docx_filename,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="download_docx_btn"
+                )
