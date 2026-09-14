@@ -1,21 +1,35 @@
-import streamlit as st
 import os
+import streamlit as st
 from invoice_parser import parse_invoice_pdf
 from document_generator import generate_outputs
-from invoice_parser import parse_invoice_pdf
 
 st.set_page_config(page_title="Xử lý hóa đơn MobiFone", layout="wide")
 
 st.title("📄 Phần Mềm Xử Lý Hóa Đơn & Bảng Kê MobiFone")
 
+# Khởi tạo biến trong session_state nếu chưa có
+if "excel_path" not in st.session_state:
+    st.session_state.excel_path = None
+if "docx_path" not in st.session_state:
+    st.session_state.docx_path = None
+if "last_uploaded_file" not in st.session_state:
+    st.session_state.last_uploaded_file = None
+
 uploaded_file = st.file_uploader("Tải lên file PDF hóa đơn MobiFone", type=["pdf"], key="pdf_uploader")
 
+# Kiểm tra nếu người dùng tải lên file mới (hoặc thay đổi file)
 if uploaded_file is not None:
+    # Nếu phát hiện file mới được upload, tiến hành reset lại state cũ để tránh hiển thị nhầm dữ liệu
+    if st.session_state.last_uploaded_file != uploaded_file.name:
+        st.session_state.excel_path = None
+        st.session_state.docx_path = None
+        st.session_state.last_uploaded_file = uploaded_file.name
+
     temp_pdf_path = "temp_invoice.pdf"
     with open(temp_pdf_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
         
-    # Phân tích dữ liệu từ PDF
+    # Phân tích dữ liệu từ file PDF tạm thời (chỉ gọi 1 lần duy nhất để tránh xung đột)
     data = parse_invoice_pdf(temp_pdf_path)
     
     st.divider()
@@ -57,27 +71,13 @@ if uploaded_file is not None:
 
     st.divider()
 
-# Khởi tạo biến trong session_state
-if "excel_path" not in st.session_state:
-    st.session_state.excel_path = None
-if "docx_path" not in st.session_state:
-    st.session_state.docx_path = None
-
-# Đặt widget file_uploader và lấy biến kết quả (ví dụ: uploaded_file)
-# uploaded_file = st.file_uploader("Tải lên file PDF hóa đơn MobiFone", type=["pdf"], key="pdf_uploader")
-
-# ⚠️ CHỈ HIỂN THỊ NÚT TẠO KHI ĐÃ CÓ FILE ĐƯỢC TẢI LÊN
-if uploaded_file is not None:
-    
-    # Xử lý đọc dữ liệu từ file PDF ở đây...
-    data = parse_invoice_pdf(uploaded_file) 
-
+    # Nút tạo Bảng Kê Excel & Giấy Đề Nghị Word
     if st.button("🚀 Tạo Bảng Kê Excel & Giấy Đề Nghị Word", type="primary"):
         with st.spinner("Đang tạo file..."):
             st.session_state.excel_path, st.session_state.docx_path = generate_outputs(data)
         st.success("✅ Đã tạo file thành công!")
 
-# Hiển thị nút tải xuống nếu đã có đường dẫn file
+# Hiển thị nút tải xuống nếu đã có đường dẫn file hợp lệ trong session
 if st.session_state.excel_path and st.session_state.docx_path:
     if os.path.exists(st.session_state.excel_path) and os.path.exists(st.session_state.docx_path):
         
